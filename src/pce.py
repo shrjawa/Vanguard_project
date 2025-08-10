@@ -16,13 +16,13 @@ from qiskit_aer.primitives import EstimatorV2 as AerEstimatorV2
 from qiskit_ibm_runtime import SamplerV2 as RuntimeSamplerV2
 from qiskit_ibm_runtime import EstimatorV2 as RuntimeEstimatorV2
 from logging import exception
-def get_service():
+def get_service(token: str, instance: str):
   from qiskit_ibm_runtime import QiskitRuntimeService
-  token="Your_API_key"
+  token="token"
   service = QiskitRuntimeService.save_account(
       token=token, # Your token is confidential.
       # Do not share your token in public code.
-      instance="Your_CRN", # Optionally specify the instance to use.
+      instance=instance, # Optionally specify the instance to use.
       #plans_preference="['Open']", # Optionally set the types of plans to prioritize.  This is ignored if the instance is specified.
       region="Washington DC (us-east)", # Optionally set the region to prioritize. This is ignored if the instance is specified.
       #name="<account-name>", # Optionally name this set of account credentials.
@@ -146,7 +146,7 @@ def get_Simple_Noise_Model(prob_1,prob_2,single_gates=['u1', 'u2', 'u3'], double
 
 # run Quadratic Contrained Optimization Problem (QCBO) with linear constraints
 
-def run_QCBO(init_params, alpha, ansatz, pce_x, pce_y, pce_z, node_x_list, node_y_list, node_z_list, Q, h, c, A, b, penalty, simulation_type, shots = 1024, method="COBYLA", tol=1e-4, optimization_label=3, noise_model=None):
+def run_QCBO(init_params, alpha, ansatz, pce_x, pce_y, pce_z, node_x_list, node_y_list, node_z_list, Q, h, c, A, b, penalty, simulation_type, shots = 1024, method="COBYLA", tol=1e-4, optimization_label=3, noise_model=None, token=None, instance=None):
   if simulation_type == 'exact' and noise_model == None:
     backend = AerSimulator(method='statevector')
   if simulation_type == 'shot_based' and shots != None and noise_model == None:
@@ -154,7 +154,10 @@ def run_QCBO(init_params, alpha, ansatz, pce_x, pce_y, pce_z, node_x_list, node_
   if simulation_type == "noisy_shot_based" and shots != None and noise_model != None:
     backend = AerSimulator(noise_model=noise_model)
   if simulation_type=='Noisy_backend_real': #simulation based on noise from real device
-    service = get_service()
+    if not token or not instance:
+      raise ValueError("Token and instance must be provided for 'Noisy_backend_real' simulation.")
+        
+    service = get_service(token, instance)
     backend = service.backend("ibm_brisbane")
 
   isa_ansatz, isa_pce_x, isa_pce_y, isa_pce_z = get_isa_ansatz_isa_hamiltoninas_for_pauli_x_y_z_correlation_encoding(ansatz, pce_x, pce_y, pce_z, backend, optimization_label)
