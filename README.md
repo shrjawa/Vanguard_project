@@ -33,7 +33,7 @@ Classical Optimization: Employs classical optimizers like L-BFGS-B to find the o
     ```
     if conda:
     ```
-    if conda:
+    
     conda create --name project_name
     conda activate project_name
     ```
