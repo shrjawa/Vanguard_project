@@ -4,6 +4,7 @@ Quantum-Classical Hybrid Optimization for QCBO
 
 A Python project that uses a Variational Quantum Eigensolver (VQE) with Pauli correlation encoding to solve Quadratic Constrained Binary Optimization (QCBO) problems.
 Pauli Correlation Encoding scheme is particularly useful for problems with a large number of binary variables, as it allows the problem to be executed on current quantum computers, which have a limited number of available qubits.
+
 Features
 QCBO Problem Mapping: Reads a mathematical optimization problem from a .lp file and maps it to a quantum Hamiltonian.
 
