@@ -264,33 +264,32 @@ def polish_on_real_device(
     maxiter=20, # Keep the number of hardware iterations low
     shots=8192
 ):
-    """
+    '''
     Takes a near-optimal set of parameters and performs a final, short
     optimization on a real quantum device with error mitigation.
-    """
-    print("\n--- Starting Phase 2: Polishing parameters on real hardware ---")
-    service = QiskitRuntimeService(token=token, instance=instance, channel="ibm_quantum")
+    '''
+    print("\n Starting Phase 2: Get better parameters on real hardware ")
+    service = get_service(token, instance)
     backend = service.backend("ibm_brisbane")
-    print(f"Using real backend: {backend.name} for final optimization.")
 
-    # These lists will store the history of the hardware optimization
+    
     cost_list = []
     params_list = []
-    bitstrings = np.zeros(Q.shape[0]) # Use a mutable object to store the final bitstring
+    bitstrings = np.zeros(Q.shape[0]) 
 
-    # Use a Session for better performance by managing jobs sent to the cloud
+    
     with Session(backend=backend) as session:
-        # Create the RUNTIME estimator, which works with Sessions
+        # Create the RUNTIME estimator
         runtime_estimator = RuntimeEstimatorV2(session=session)
 
-        # Set the runtime error mitigation and other options
+        # Set the runtime error mitigation 
         runtime_estimator.options.resilience_level = 1
         runtime_estimator.options.execution.shots = shots
         runtime_estimator.options.dynamical_decoupling.enable = True
 
-        # This nested function is what scipy.minimize will call at each step
+       
         def get_cost_on_hardware(params):
-            nonlocal bitstrings # Modify the bitstrings variable from the outer scope
+            nonlocal bitstrings 
             
             pubs_x = [(ansatz, obs, params) for obs in pce_x]
             pubs_y = [(ansatz, obs, params) for obs in pce_y]
@@ -318,7 +317,7 @@ def polish_on_real_device(
 
             cost = y @ Q @ y + h @ y + c + penalty * np.sum(np.maximum(b - A @ y, 0)**2)
             
-            print(f"Hardware Cost: {cost}")
+            print(f"Hardware based Cost: {cost}")
             cost_list.append(cost)
             params_list.append(params)
             return cost
