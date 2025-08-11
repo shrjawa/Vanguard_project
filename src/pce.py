@@ -247,3 +247,89 @@ def run_QCBO(init_params, alpha, ansatz, pce_x, pce_y, pce_z, node_x_list, node_
 
 
   return cost_list, params_list, bitstrings
+
+
+
+
+def polish_on_real_device(
+    initial_params, # The best parameters from the local simulation become the starting point
+    ansatz,
+    pce_x, pce_y, pce_z,
+    node_x_list, node_y_list, node_z_list,
+    Q, h, c, A, b, penalty,
+    alpha,
+    token, # Your IBM Quantum token
+    instance, # Your hub/group/project string e.g., "ibm-q/open/main"
+    method="COBYQA", # The classical optimizer to use
+    maxiter=20, # Keep the number of hardware iterations low
+    shots=8192
+):
+    """
+    Takes a near-optimal set of parameters and performs a final, short
+    optimization on a real quantum device with error mitigation.
+    """
+    print("\n--- Starting Phase 2: Polishing parameters on real hardware ---")
+    service = QiskitRuntimeService(token=token, instance=instance, channel="ibm_quantum")
+    backend = service.backend("ibm_brisbane")
+    print(f"Using real backend: {backend.name} for final optimization.")
+
+    # These lists will store the history of the hardware optimization
+    cost_list = []
+    params_list = []
+    bitstrings = np.zeros(Q.shape[0]) # Use a mutable object to store the final bitstring
+
+    # Use a Session for better performance by managing jobs sent to the cloud
+    with Session(backend=backend) as session:
+        # Create the RUNTIME estimator, which works with Sessions
+        runtime_estimator = RuntimeEstimatorV2(session=session)
+
+        # Set the runtime error mitigation and other options
+        runtime_estimator.options.resilience_level = 1
+        runtime_estimator.options.execution.shots = shots
+        runtime_estimator.options.dynamical_decoupling.enable = True
+
+        # This nested function is what scipy.minimize will call at each step
+        def get_cost_on_hardware(params):
+            nonlocal bitstrings # Modify the bitstrings variable from the outer scope
+            
+            pubs_x = [(ansatz, obs, params) for obs in pce_x]
+            pubs_y = [(ansatz, obs, params) for obs in pce_y]
+            pubs_z = [(ansatz, obs, params) for obs in pce_z]
+            all_pubs = pubs_x + pubs_y + pubs_z
+
+            # Submit the job to the real hardware
+            job = runtime_estimator.run(all_pubs)
+            print(f"Job {job.job_id()} submitted for cost evaluation. Waiting for result...")
+            results = job.result()
+            print("Result received.")
+
+            # --- Calculate cost from hardware results ---
+            lenx, leny, lenz = len(pce_x), len(pce_y), len(pce_z)
+            expectation_x = np.array([results[i].data.evs for i in range(lenx)])
+            expectation_y = np.array([results[i + lenx].data.evs for i in range(leny)])
+            expectation_z = np.array([results[i + lenx + leny].data.evs for i in range(lenz)])
+
+            y = np.zeros(Q.shape[0])
+            y[node_x_list] = (1 - np.tanh(alpha * expectation_x)) / 2
+            y[node_y_list] = (1 - np.tanh(alpha * expectation_y)) / 2
+            y[node_z_list] = (1 - np.tanh(alpha * expectation_z)) / 2
+            
+            bitstrings = (1 - np.sign(np.concatenate([expectation_x, expectation_y, expectation_z]))) / 2
+
+            cost = y @ Q @ y + h @ y + c + penalty * np.sum(np.maximum(b - A @ y, 0)**2)
+            
+            print(f"Hardware Cost: {cost}")
+            cost_list.append(cost)
+            params_list.append(params)
+            return cost
+
+       
+        result = minimize(
+            get_cost_on_hardware,
+            initial_params, 
+            method=method,
+            options={'maxiter': maxiter}, # Crucially, very few iterations
+            tol=1e-5 # A tighter tolerance for the final polish
+        )
+
+    return cost_list, params_list, bitstrings
