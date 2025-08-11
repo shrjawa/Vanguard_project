@@ -31,6 +31,11 @@ Classical Optimization: Employs classical optimizers like L-BFGS-B to find the o
     python -m venv venv
     source venv/bin/activate  # On Windows, use `venv\Scripts\activate`
     ```
+    ```
+    if conda:
+    conda create --name project_name
+    conda activate project_name
+    ```
 
 3.  **Install dependencies:**
     ```bash
