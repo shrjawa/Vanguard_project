@@ -18,11 +18,27 @@ Multiple Ansatz Circuits: Includes support for different quantum circuits (Effic
 
 Classical Optimization: Employs classical optimizers like L-BFGS-B to find the optimal parameters for the ansatz circuit.
 
-git clone https://github.com/shrjawa/Vanguard_project.git
 
-cd Vanguard_project
+1.  **Clone the repository:**
+    ```bash
+    git clone [[https://github.com/your-username/your-repo-name.git](https://github.com/shrjawa/Vanguard_project.git)]([https://github.com/your-username/your-repo-name.git](https://github.com/shrjawa/Vanguard_project.git))
+    cd your-repo-name
+    ```
 
-pip install -r requirements.txt
+2.  **Create a virtual environment** (recommended):
+    ```bash
+    cd Vanguard_project
+    python -m venv venv
+    source venv/bin/activate  # On Windows, use `venv\Scripts\activate`
+    ```
+
+3.  **Install dependencies:**
+    ```bash
+    pip install -r requirements.txt
+    ```
+
+
+
 
 
 
