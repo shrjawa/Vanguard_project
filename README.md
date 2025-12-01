@@ -1,6 +1,7 @@
 # Vanguard_project
 WISER Vanguard project
 Quantum-Classical Hybrid Optimization for QCBO
+<img width="5068" height="3916" alt="Shreeram-Jawadekar-af44" src="https://github.com/user-attachments/assets/6d1d537d-4450-462c-ae2b-675fbf24e1a8" />
 
 A Python project that uses a Variational Quantum Eigensolver (VQE) with Pauli correlation encoding to solve Quadratic Constrained Binary Optimization (QCBO) problems.
 Pauli Correlation Encoding scheme is particularly useful for problems with a large number of binary variables, as it allows the problem to be executed on current quantum computers, which have a limited number of available qubits.
